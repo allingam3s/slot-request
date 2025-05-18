@@ -2,57 +2,100 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Slot Overlay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Twitch Slot Overlay</title>
   <style>
     body {
       margin: 0;
-      padding: 10px;
-      font-family: sans-serif;
-      background-color: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      background: transparent;
       color: white;
+      font-family: Arial, sans-serif;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      font-size: 24px;
     }
+    
     .slot-container {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
+    
     .slot {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(0, 0, 0, 0.5);
       border-radius: 8px;
-      padding: 8px;
-      font-size: 1.2rem;
+      padding: 10px 15px;
+      margin-bottom: 5px;
     }
+    
+    .slot-name {
+      font-weight: bold;
+      color: #ff9966;
+    }
+    
+    .slot-request {
+      color: #ffffff;
+      margin-left: 10px;
+    }
+    
     .empty {
-      opacity: 0.5;
+      opacity: 0.6;
+      font-style: italic;
     }
   </style>
 </head>
 <body>
-  <h2>🎮 Slot-Liste</h2>
-  <div class="slot-container" id="slots"></div>
+  <div class="slot-container" id="slots">
+    <div class="slot empty">Warte auf Slot-Daten...</div>
+  </div>
 
   <script>
     async function loadSlots() {
       try {
-        const res = await fetch('slots.json'); // Holt die Slotdaten
-        const data = await res.json();
-        const container = document.getElementById('slots');
+        const res = await fetch('https://twitch-slot-api.onrender.com/slots.json');
+        const slots = await res.json();
+        const container = document.getElementById("slots");
         container.innerHTML = '';
 
-        for (let i = 0; i < 3; i++) {
-          const user = data[i] || null;
-          const div = document.createElement('div');
-          div.className = 'slot' + (user ? '' : ' empty');
-          div.textContent = `Slot ${i + 1}: ${user || '(frei)'}`;
-          container.appendChild(div);
+        if (slots.length === 0) {
+          const emptySlot = document.createElement('div');
+          emptySlot.className = 'slot empty';
+          emptySlot.textContent = 'Keine Wünsche in der Liste';
+          container.appendChild(emptySlot);
+        } else {
+          // Für jedes Slot-Element
+          slots.forEach((slot, index) => {
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'slot';
+            
+            // Unterstützt sowohl altes (String) als auch neues (Objekt) Format
+            if (typeof slot === 'string') {
+              // Altes Format
+              slotDiv.innerHTML = `${index + 1}. <span class="slot-name">${slot}</span>`;
+            } else {
+              // Neues Format mit Name und Wunsch
+              slotDiv.innerHTML = `${index + 1}. <span class="slot-name">${slot.name}</span>`;
+              
+              if (slot.request && slot.request !== 'Kein Wunsch angegeben') {
+                const requestSpan = document.createElement('span');
+                requestSpan.className = 'slot-request';
+                requestSpan.textContent = `— ${slot.request}`;
+                slotDiv.appendChild(requestSpan);
+              }
+            }
+            
+            container.appendChild(slotDiv);
+          });
         }
       } catch (e) {
         console.error('Fehler beim Laden:', e);
+        document.getElementById("slots").innerHTML = '<div class="slot error">Fehler beim Laden der Slots</div>';
       }
     }
 
+    // Initial laden und alle 5 Sekunden aktualisieren
     loadSlots();
-    setInterval(loadSlots, 5000); // alle 5 Sekunden neu laden
+    setInterval(loadSlots, 5000);
   </script>
 </body>
 </html>
