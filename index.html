@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Slot Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 10px;
+      font-family: sans-serif;
+      background-color: rgba(0, 0, 0, 0.6);
+      color: white;
+    }
+    .slot-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .slot {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 1.2rem;
+    }
+    .empty {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎮 Slot-Liste</h2>
+  <div class="slot-container" id="slots"></div>
+
+  <script>
+    async function loadSlots() {
+      try {
+        const res = await fetch('slots.json'); // Holt die Slotdaten
+        const data = await res.json();
+        const container = document.getElementById('slots');
+        container.innerHTML = '';
+
+        for (let i = 0; i < 3; i++) {
+          const user = data[i] || null;
+          const div = document.createElement('div');
+          div.className = 'slot' + (user ? '' : ' empty');
+          div.textContent = `Slot ${i + 1}: ${user || '(frei)'}`;
+          container.appendChild(div);
+        }
+      } catch (e) {
+        console.error('Fehler beim Laden:', e);
+      }
+    }
+
+    loadSlots();
+    setInterval(loadSlots, 5000); // alle 5 Sekunden neu laden
+  </script>
+</body>
+</html>
